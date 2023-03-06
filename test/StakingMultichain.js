@@ -27,7 +27,6 @@ describe("Staking contract to Multichain", function () {
         params: [USDC_WHALE],
       });
     }
-
     const whale = await ethers.getSigner(USDC_WHALE);
     const usdc = await ethers.getContractAt("IUSDC", usdcAddress);
     const accounts = await ethers.getSigners();
@@ -66,3 +65,11 @@ describe("Staking contract to Multichain", function () {
       .reverted;
   });
 });
+async function increaseTimeBy(amount) {
+  var blockNumBefore = await ethers.provider.getBlockNumber();
+  var blockBefore = await ethers.provider.getBlock(blockNumBefore);
+  await time.increaseTo(blockBefore.timestamp + amount);
+  var timestampBefore = blockBefore.timestamp;
+  var date = new Date(timestampBefore * 1000);
+  // console.log(`time now after increase by ${amount / oneday} days is ${date}`);
+}

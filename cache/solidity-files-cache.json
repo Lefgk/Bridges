@@ -856,8 +856,8 @@
       ]
     },
     "/Users/lefg/Documents/GitHub/Bridges/contracts/Staking.sol": {
-      "lastModificationDate": 1677969880251,
-      "contentHash": "120dd0322a4f3c6dbb9fd96293b18e0e",
+      "lastModificationDate": 1678102025570,
+      "contentHash": "d77dc0544990b14ef477d2944fd20f36",
       "sourceName": "contracts/Staking.sol",
       "solcConfig": {
         "version": "0.8.17",

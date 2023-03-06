@@ -14,6 +14,14 @@ interface IRouter {
         uint256 _amountLP,
         address _to
     ) external;
+
+    function swapExactTokensForTokens(
+        uint amountIn,
+        uint amountOutMin,
+        address[] calldata path,
+        address to,
+        uint deadline
+    ) external returns (uint[] memory amounts);
 }
 
 interface ILPStaker {
@@ -141,9 +149,12 @@ contract Staking {
         0x8965349fb649A33a30cbFDa057D8eC2C48AbE2A2;
     address public immutable stargateLPStaking =
         0x3052A0F6ab15b4AE1df39962d5DdEFacA86DaB47;
+    address public immutable STG = 0xB0D502E938ed5f4df2E681fE6E419ff29631d62b;
     address public immutable USDT = 0x55d398326f99059fF775485246999027B3197955;
     address public immutable USDC = 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d;
     address public immutable SUSDT = 0x9aA83081AA06AF7208Dcc7A4cB72C94d057D2cda;
+    address public immutable PancakeRouter =
+        0x10ED43C718714eb63d5aA57B78B54704E256024E;
 
     uint256 MAX_INT = 2 ** 256 - 1;
 
@@ -155,6 +166,8 @@ contract Staking {
         IBEP20(SUSDT).approve(stargateRouter, MAX_INT);
         IBEP20(SUSDT).approve(stargateLPStaking, MAX_INT);
         IBEP20(USDC).approve(MultiChainRouter, MAX_INT);
+        IBEP20(STG).approve(PancakeRouter, MAX_INT);
+        IBEP20(USDT).approve(PancakeRouter, MAX_INT);
     }
 
     function depositToMultiChain(uint256 _amount) external {
@@ -174,6 +187,24 @@ contract Staking {
         ILPStaker(stargateLPStaking).deposit(0, _amountLP);
     }
 
+    function compoundToStargate(
+        uint256 _amount,
+        address[] memory path
+    ) external {
+        //   ILPStaker(stargateLPStaking).deposit(0, 0);
+
+        uint[] memory amounts = IRouter(PancakeRouter).swapExactTokensForTokens(
+            _amount,
+            0,
+            path,
+            address(this),
+            2678053210
+        );
+        IRouter(stargateRouter).addLiquidity(2, amounts[1], address(this));
+        uint256 _amountLP = IBEP20(SUSDT).balanceOf(address(this));
+        ILPStaker(stargateLPStaking).deposit(0, _amountLP);
+    }
+
     function withrawFromStargate(uint256 _amount) external {
         ILPStaker(stargateLPStaking).withdraw(0, _amount);
 
@@ -183,10 +214,6 @@ contract Staking {
             _amountUSDT,
             address(this)
         );
-    }
-
-    function claimSTG() external {
-        ILPStaker(stargateLPStaking).deposit(0, 0);
     }
 
     /**
