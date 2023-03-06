@@ -2,345 +2,229 @@
 
 ## Gas Optimizations
 
-|                   | Issue                                                                                        | Instances |
-| ----------------- | :------------------------------------------------------------------------------------------- | :-------: |
-| [GAS-1](#GAS-1)   | Use `selfbalance()` instead of `address(this).balance`                                       |     2     |
-| [GAS-2](#GAS-2)   | Use assembly to check for `address(0)`                                                       |     3     |
-| [GAS-3](#GAS-3)   | Using bools for storage incurs overhead                                                      |     3     |
-| [GAS-4](#GAS-4)   | State variables should be cached in stack variables rather than re-reading them from storage |     4     |
-| [GAS-5](#GAS-5)   | Use Custom Errors                                                                            |    25     |
-| [GAS-6](#GAS-6)   | Don't initialize variables with default value                                                |     1     |
-| [GAS-7](#GAS-7)   | Long revert strings                                                                          |     6     |
-| [GAS-8](#GAS-8)   | Functions guaranteed to revert when called by normal users can be marked `payable`           |     4     |
-| [GAS-9](#GAS-9)   | Using `private` rather than `public` for constants, saves gas                                |     1     |
-| [GAS-10](#GAS-10) | Use != 0 instead of > 0 for unsigned integer comparison                                      |     4     |
-| [GAS-11](#GAS-11) | `internal` functions not called by the contract should be removed                            |    10     |
+|                 | Issue                                                                              | Instances |
+| --------------- | :--------------------------------------------------------------------------------- | :-------: |
+| [GAS-1](#GAS-1) | Using bools for storage incurs overhead                                            |     1     |
+| [GAS-2](#GAS-2) | Use Custom Errors                                                                  |    28     |
+| [GAS-3](#GAS-3) | Don't initialize variables with default value                                      |     4     |
+| [GAS-4](#GAS-4) | Long revert strings                                                                |     6     |
+| [GAS-5](#GAS-5) | Functions guaranteed to revert when called by normal users can be marked `payable` |    13     |
+| [GAS-6](#GAS-6) | Using `private` rather than `public` for constants, saves gas                      |     3     |
+| [GAS-7](#GAS-7) | Use != 0 instead of > 0 for unsigned integer comparison                            |    17     |
 
-### <a name="GAS-1"></a>[GAS-1] Use `selfbalance()` instead of `address(this).balance`
-
-Use assembly when getting a contract's balance of ETH.
-
-You can use `selfbalance()` instead of `address(this).balance` when getting your contract's balance of ETH to save gas.
-Additionally, you can use `balance(address)` instead of `address.balance()` when getting an external contract's balance of ETH.
-
-_Saves 15 gas when checking internal balance, 6 for external_
-
-_Instances (2)_:
-
-```solidity
-File: example/Flattened.sol
-
-552:         require(address(this).balance >= amount, "Address: insufficient balance");
-
-621:         require(address(this).balance >= value, "Address: insufficient balance for call");
-
-```
-
-### <a name="GAS-2"></a>[GAS-2] Use assembly to check for `address(0)`
-
-_Saves 6 gas per instance_
-
-_Instances (3)_:
-
-```solidity
-File: example/Flattened.sol
-
-328:         require(newOwner != address(0), "Ownable: new owner is the zero address");
-
-991:         require(_feeAddress != address(0), "!nonzero");
-
-998:         require(_earnedAddress != address(0), "!nonzero");
-
-```
-
-### <a name="GAS-3"></a>[GAS-3] Using bools for storage incurs overhead
+### <a name="GAS-1"></a>[GAS-1] Using bools for storage incurs overhead
 
 Use uint256(1) and uint256(2) for true/false to avoid a Gwarmaccess (100 gas), and to avoid Gsset (20000 gas) when changing from ‘false’ to ‘true’, after having been ‘true’ in the past. See [source](https://github.com/OpenZeppelin/openzeppelin-contracts/blob/58f635312aa21f947cae5f8578638a85aa2519f5/contracts/security/ReentrancyGuard.sol#L23-L27).
 
-_Instances (3)_:
+_Instances (1)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-181:     bool private _paused;
-
-834:     bool public immutable isCAKEStaking;
-
-835:     bool public immutable isStaking;
+1085:     mapping(IERC20 => bool) public poolExistence;
 
 ```
 
-### <a name="GAS-4"></a>[GAS-4] State variables should be cached in stack variables rather than re-reading them from storage
-
-The instances below point to the second+ access of a state variable within a function. Caching of a state variable replaces each Gwarmaccess (100 gas) with a much cheaper stack read. Other less obvious fixes/optimizations include having local memory caches of state variable structs, or having local caches of state variable contracts/addresses.
-
-_Saves 100 gas per instance_
-
-_Instances (4)_:
-
-```solidity
-File: example/Flattened.sol
-
-895:         IERC20(wantAddress).safeTransferFrom(msg.sender, address(this), _wantAmt);
-
-916:             IPancakeswapFarm(farmContractAddress).deposit(pid, _wantAmt);
-
-939:         wantLockedTotal = wantLockedTotal - _wantAmt;
-
-941:         IERC20(wantAddress).safeTransfer(MasterChefAddress, _wantAmt);
-
-```
-
-### <a name="GAS-5"></a>[GAS-5] Use Custom Errors
+### <a name="GAS-2"></a>[GAS-2] Use Custom Errors
 
 [Source](https://blog.soliditylang.org/2021/04/21/custom-errors/)
 Instead of using error strings, to reduce deployment and runtime cost, you should use Custom Errors. This would save both deployment and runtime cost.
 
-_Instances (25)_:
+_Instances (28)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-116:         require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
+263:         require(owner() == _msgSender(), "Ownable: caller is not the owner");
 
-225:         require(!paused(), "Pausable: paused");
+282:         require(newOwner != address(0), "Ownable: new owner is the zero address");
 
-232:         require(paused(), "Pausable: not paused");
+444:         require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
 
-309:         require(owner() == _msgSender(), "Ownable: caller is not the owner");
+519:         require(address(this).balance >= amount, "Address: insufficient balance");
 
-328:         require(newOwner != address(0), "Ownable: new owner is the zero address");
+522:         require(success, "Address: unable to send value, recipient may have reverted");
 
-552:         require(address(this).balance >= amount, "Address: insufficient balance");
+588:         require(address(this).balance >= value, "Address: insufficient balance for call");
 
-555:         require(success, "Address: unable to send value, recipient may have reverted");
+659:                 require(isContract(target), "Address: call to non-contract");
 
-621:         require(address(this).balance >= value, "Address: insufficient balance for call");
+816:             require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
 
-692:                 require(isContract(target), "Address: call to non-contract");
+835:         require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
 
-785:             require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
+852:             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
 
-804:         require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
+1071:         require(Migrator == msg.sender, "migrator only");
 
-821:             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+1088:         require(poolExistence[_lpToken] == false, "nonDuplicated: duplicated");
 
-859:         require(msg.sender == MasterChefAddress, "Only Masterchef!");
+1103:         require(_depositFeeBP <= 601, "add: bad deposit fee");
 
-921:         require(_wantAmt > 0, "_wantAmt <= 0");
+1104:         require(_allocPoint <= 1e6, "add: invalid allocPoint");
 
-955:         require(isStaking, "!isStaking");
+1105:         require(address(_lpToken) != address(PigsV2Token), "add: no native token pool");
 
-974:         require(msg.sender == govAddress, "Not authorised");
+1106:         require(_harvestInterval <= MAXIMUM_HARVEST_INTERVAL, "add: invalid harvest interval");
 
-979:         require(msg.sender == govAddress, "Not authorised");
+1138:         require(_allocPoint <= 1e6, "set: invalid allocPoint");
 
-984:         require(msg.sender == govAddress, "!gov");
+1139:         require(_depositFeeBP <= 601, "set: bad deposit fee");
 
-990:         require(msg.sender == govAddress, "!gov");
+1140:         require(_harvestInterval <= MAXIMUM_HARVEST_INTERVAL, "set: invalid harvest interval");
 
-991:         require(_feeAddress != address(0), "!nonzero");
+1243:             require(_amount > 0, "no funds were received");
 
-997:         require(msg.sender == govAddress, "!gov");
+1286:             require(_amount > 0, "no funds were received");
 
-998:         require(_earnedAddress != address(0), "!nonzero");
+1302:         require(user.amount >= _amount, "withdraw: not good");
 
-1004:         require(msg.sender == govAddress, "!gov");
+1420:         require(address(_founder) != address(0), "!nonzero");
 
-1010:         require(msg.sender == govAddress, "!gov");
+1426:         require(_newRewardsAmount <= 100, "too high reward");
 
-1011:         require(_token != wantAddress, "!safe");
+1441:         require(_platformAddress != address(0), "!nonzero");
+
+1447:         require(msg.sender == govAddress, "!gov");
+
+1461:         require(_govAddress != address(0), "zero address");
+
+1467:         require(_dogPoundAutoPool != address(0), "zero address");
 
 ```
 
-### <a name="GAS-6"></a>[GAS-6] Don't initialize variables with default value
+### <a name="GAS-3"></a>[GAS-3] Don't initialize variables with default value
 
-_Instances (1)_:
+_Instances (4)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-849:     uint256 public wantLockedTotal = 0;
+1004:     bool mintBurned = false;
+
+1047:     uint256 public totalAllocPoint = 0;
+
+1188:         for (uint256 pid = 0; pid < length; ++pid) {
+
+1434:         for (uint256 pid = 0; pid < length; ++pid) {
 
 ```
 
-### <a name="GAS-7"></a>[GAS-7] Long revert strings
+### <a name="GAS-4"></a>[GAS-4] Long revert strings
 
 _Instances (6)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-328:         require(newOwner != address(0), "Ownable: new owner is the zero address");
+282:         require(newOwner != address(0), "Ownable: new owner is the zero address");
 
-555:         require(success, "Address: unable to send value, recipient may have reverted");
+522:         require(success, "Address: unable to send value, recipient may have reverted");
 
-621:         require(address(this).balance >= value, "Address: insufficient balance for call");
+588:         require(address(this).balance >= value, "Address: insufficient balance for call");
 
-785:             require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
+816:             require(oldAllowance >= value, "SafeERC20: decreased allowance below zero");
 
-804:         require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
+835:         require(nonceAfter == nonceBefore + 1, "SafeERC20: permit did not succeed");
 
-821:             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
+852:             require(abi.decode(returndata, (bool)), "SafeERC20: ERC20 operation did not succeed");
 
 ```
 
-### <a name="GAS-8"></a>[GAS-8] Functions guaranteed to revert when called by normal users can be marked `payable`
+### <a name="GAS-5"></a>[GAS-5] Functions guaranteed to revert when called by normal users can be marked `payable`
 
 If a function modifier such as `onlyOwner` is used, the function will revert if a normal user tries to pay the function. Marking the function as `payable` will lower the gas cost for legitimate callers because the compiler will not include checks for whether a payment was provided.
 
-_Instances (4)_:
+_Instances (13)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-319:     function renounceOwnership() public virtual onlyOwner {
+273:     function renounceOwnership() public virtual onlyOwner {
 
-327:     function transferOwnership(address newOwner) public virtual onlyOwner {
+281:     function transferOwnership(address newOwner) public virtual onlyOwner {
 
-892:     function deposit(uint256 _wantAmt) external onlyMasterChef whenNotPaused nonReentrant returns (uint256) {
+1223:     function depositMigrator(address _userAddress, uint256 _pid, uint256 _amount) external nonReentrant onlyMigrator {
 
-920:     function withdraw(uint256 _wantAmt) external onlyMasterChef nonReentrant returns (uint256) {
+1410:     function increasePigsSupply(uint256 _amount) external onlyOwner {
+
+1415:     function burnMint() external onlyOwner {
+
+1419:     function setFoundersAddresses(IFounderStakerV2 _founder) external onlyOwner {
+
+1425:     function setFoundersRewards(uint256 _newRewardsAmount) external onlyOwner {
+
+1431:     function setFarmStartBlock(uint256 _newStartBlock) external onlyOwner {
+
+1440:     function setPlatformAddress(address _platformAddress) external onlyOwner {
+
+1456:     function setDDSCAAddress(IDDSCA _ddsca) external onlyOwner {
+
+1460:     function setGov(address _govAddress) external onlyOwner {
+
+1466:     function setDogPoundAutoPool(address _dogPoundAutoPool) external onlyOwner {
+
+1472:     function updateMigrator(address _migrator) external onlyOwner {
 
 ```
 
-### <a name="GAS-9"></a>[GAS-9] Using `private` rather than `public` for constants, saves gas
+### <a name="GAS-6"></a>[GAS-6] Using `private` rather than `public` for constants, saves gas
 
 If needed, the values can be read from the verified contract source code, or if there are multiple values there can be a single getter function that [returns a tuple](https://github.com/code-423n4/2022-08-frax/blob/90f55a9ce4e25bceed3a74290b854341d8de6afa/src/contracts/FraxlendPair.sol#L156-L178) of the values of all currently-public constants. Saves **3406-3606 gas** in deployment gas due to the compiler not having to create non-payable getter functions for deployment calldata, not having to store the bytes of the value outside of where it's used, and not adding another entry to the method ID table
 
-_Instances (1)_:
+_Instances (3)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-837:     address public constant cakeTokenAddress = 0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82;
+1003:     address public constant busdCurrencyAddress = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+
+1013:     IUniswapV2Router02 public constant PancakeRouter = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+
+1021:     uint256 public constant MAXIMUM_HARVEST_INTERVAL = 14 days;
 
 ```
 
-### <a name="GAS-10"></a>[GAS-10] Use != 0 instead of > 0 for unsigned integer comparison
+### <a name="GAS-7"></a>[GAS-7] Use != 0 instead of > 0 for unsigned integer comparison
 
-_Instances (4)_:
-
-```solidity
-File: example/Flattened.sol
-
-532:         return account.code.length > 0;
-
-720:         if (returndata.length > 0) {
-
-819:         if (returndata.length > 0) {
-
-921:         require(_wantAmt > 0, "_wantAmt <= 0");
-
-```
-
-### <a name="GAS-11"></a>[GAS-11] `internal` functions not called by the contract should be removed
-
-If the functions are required by an interface, the contract should inherit from that interface and use the `override` keyword
-
-_Instances (10)_:
+_Instances (17)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-551:     function sendValue(address payable recipient, uint256 amount) internal {
+5: pragma solidity >=0.6.2;
 
-576:     function functionCall(address target, bytes memory data) internal returns (bytes memory) {
+137: pragma solidity >=0.6.2;
 
-586:     function functionCall(
+499:         return account.code.length > 0;
 
-706:     function verifyCallResult(
+687:         if (returndata.length > 0) {
 
-751:     function safeTransfer(IERC20 token, address to, uint256 value) internal {
+850:         if (returndata.length > 0) {
 
-755:     function safeTransferFrom(IERC20 token, address from, address to, uint256 value) internal {
+1167:         if (block.number > pool.lastRewardBlock && pool.lpSupply != 0 && totalAllocPoint > 0) {
 
-766:     function safeApprove(IERC20 token, address spender, uint256 value) internal {
+1207:         if (multiplier > 0) {
 
-777:     function safeIncreaseAllowance(IERC20 token, address spender, uint256 value) internal {
+1211:             if (pigsRewardOwner > 0) {
 
-782:     function safeDecreaseAllowance(IERC20 token, address spender, uint256 value) internal {
+1235:         if (_amount > 0) {
 
-791:     function safePermit(
+1243:             require(_amount > 0, "no funds were received");
 
-```
+1246:             if (pool.depositFeeBP > 0) {
 
-## Non Critical Issues
+1278:         if (_amount > 0) {
 
-|               | Issue                                                                            | Instances |
-| ------------- | :------------------------------------------------------------------------------- | :-------: |
-| [NC-1](#NC-1) | Missing checks for `address(0)` when assigning values to address state variables |     4     |
-| [NC-2](#NC-2) | Return values of `approve()` not checked                                         |     1     |
-| [NC-3](#NC-3) | Event is missing `indexed` fields                                                |     9     |
-| [NC-4](#NC-4) | Functions not used internally could be marked external                           |     1     |
+1286:             require(_amount > 0, "no funds were received");
 
-### <a name="NC-1"></a>[NC-1] Missing checks for `address(0)` when assigning values to address state variables
+1306:         if (_amount > 0) {
 
-_Instances (4)_:
+1347:             if (pigsPending > 0 || user.rewardLockedUp > 0) {
 
-```solidity
-File: example/Flattened.sol
+1347:             if (pigsPending > 0 || user.rewardLockedUp > 0) {
 
-338:         _owner = newOwner;
-
-874:         MasterChefAddress = _MasterChefAddress;
-
-877:         wantAddress = _wantAddress;
-
-881:             farmContractAddress = _farmContractAddress;
-
-```
-
-### <a name="NC-2"></a>[NC-2] Return values of `approve()` not checked
-
-Not all IERC20 implementations `revert()` when there's a failure in `approve()`. The function signature has a boolean return value and they indicate errors that way instead. By not checking the return value, operations that should have marked as failed, may potentially go through without actually approving anything
-
-_Instances (1)_:
-
-```solidity
-File: example/Flattened.sol
-
-887:             IERC20(cakeTokenAddress).approve(address(cakePoolContract), type(uint256).max);
-
-```
-
-### <a name="NC-3"></a>[NC-3] Event is missing `indexed` fields
-
-Index event fields make the field more quickly accessible to off-chain tools that parse events. However, note that each index field costs extra gas during emission, so it's not necessarily best to index the maximum allowed per event (three fields). Each event should use three indexed fields if there are three or more fields, and gas usage is not particularly of concern for the events in question. If there are fewer than three fields, all of the fields should be indexed.
-
-_Instances (9)_:
-
-```solidity
-File: example/Flattened.sol
-
-174:     event Paused(address account);
-
-179:     event Unpaused(address account);
-
-359:     event Transfer(address indexed from, address indexed to, uint256 value);
-
-365:     event Approval(address indexed owner, address indexed spender, uint256 value);
-
-852:     event FeeAddressUpdated(address feeAddress);
-
-853:     event EarnedAddressUpdated(address earnedAddress);
-
-854:     event GovUpdated(address govAddress);
-
-855:     event StuckTokenRemoval(address token, uint256 amount, address to);
-
-856:     event EarnDistributeThresholdUpdated(uint256 earnDistributeThreshold);
-
-```
-
-### <a name="NC-4"></a>[NC-4] Functions not used internally could be marked external
-
-_Instances (1)_:
-
-```solidity
-File: example/Flattened.sol
-
-1009:     function inCaseTokensGetStuck(address _token, uint256 _amount, address _to) public {
+1357:         } else if (pigsPending > 0) {
 
 ```
 
@@ -348,28 +232,46 @@ File: example/Flattened.sol
 
 |             | Issue                                   | Instances |
 | ----------- | :-------------------------------------- | :-------: |
-| [L-1](#L-1) | Do not use deprecated library functions |     1     |
-| [L-2](#L-2) | Unsafe ERC20 operation(s)               |     1     |
+| [L-1](#L-1) | Do not use deprecated library functions |     2     |
+| [L-2](#L-2) | Unsafe ERC20 operation(s)               |     2     |
+| [L-3](#L-3) | Unspecific compiler version pragma      |     2     |
 
 ### <a name="L-1"></a>[L-1] Do not use deprecated library functions
 
-_Instances (1)_:
+_Instances (2)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-766:     function safeApprove(IERC20 token, address spender, uint256 value) internal {
+797:     function safeApprove(IERC20 token, address spender, uint256 value) internal {
+
+1396:             IERC20(token).safeApprove(address(_contract), type(uint256).max);
 
 ```
 
 ### <a name="L-2"></a>[L-2] Unsafe ERC20 operation(s)
 
-_Instances (1)_:
+_Instances (2)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-887:             IERC20(cakeTokenAddress).approve(address(cakePoolContract), type(uint256).max);
+1254:                     IERC20(token0).transfer(PLATFORM_ADDRESS, amount0);
+
+1255:                     IERC20(token1).transfer(dripTaxVault, amount1);
+
+```
+
+### <a name="L-3"></a>[L-3] Unspecific compiler version pragma
+
+_Instances (2)_:
+
+```solidity
+File: example/FlattenedMC.sol
+
+5: pragma solidity >=0.6.2;
+
+137: pragma solidity >=0.6.2;
 
 ```
 
@@ -377,7 +279,7 @@ File: example/Flattened.sol
 
 |             | Issue                                  | Instances |
 | ----------- | :------------------------------------- | :-------: |
-| [M-1](#M-1) | Centralization Risk for trusted owners |     3     |
+| [M-1](#M-1) | Centralization Risk for trusted owners |    16     |
 
 ### <a name="M-1"></a>[M-1] Centralization Risk for trusted owners
 
@@ -385,15 +287,41 @@ File: example/Flattened.sol
 
 Contracts have owners with privileged rights to perform admin tasks and need to be trusted to not perform malicious updates or drain funds.
 
-_Instances (3)_:
+_Instances (16)_:
 
 ```solidity
-File: example/Flattened.sol
+File: example/FlattenedMC.sol
 
-278: abstract contract Ownable is Context {
+232: abstract contract Ownable is Context {
 
-319:     function renounceOwnership() public virtual onlyOwner {
+273:     function renounceOwnership() public virtual onlyOwner {
 
-327:     function transferOwnership(address newOwner) public virtual onlyOwner {
+281:     function transferOwnership(address newOwner) public virtual onlyOwner {
+
+995: contract MasterChefPigsV2 is Ownable, ReentrancyGuard {
+
+1100:     ) external onlyOwner nonDuplicated(_lpToken) {
+
+1137:     ) external onlyOwner {
+
+1410:     function increasePigsSupply(uint256 _amount) external onlyOwner {
+
+1415:     function burnMint() external onlyOwner {
+
+1419:     function setFoundersAddresses(IFounderStakerV2 _founder) external onlyOwner {
+
+1425:     function setFoundersRewards(uint256 _newRewardsAmount) external onlyOwner {
+
+1431:     function setFarmStartBlock(uint256 _newStartBlock) external onlyOwner {
+
+1440:     function setPlatformAddress(address _platformAddress) external onlyOwner {
+
+1456:     function setDDSCAAddress(IDDSCA _ddsca) external onlyOwner {
+
+1460:     function setGov(address _govAddress) external onlyOwner {
+
+1466:     function setDogPoundAutoPool(address _dogPoundAutoPool) external onlyOwner {
+
+1472:     function updateMigrator(address _migrator) external onlyOwner {
 
 ```
