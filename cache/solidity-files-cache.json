@@ -741,7 +741,7 @@
       ]
     },
     "/Users/lefg/Documents/GitHub/Bridges/contracts/IUSDC.sol": {
-      "lastModificationDate": 1677969880211,
+      "lastModificationDate": 1678109888790,
       "contentHash": "0cf666ec8caa03a4632593ecd9fe24fe",
       "sourceName": "contracts/IUSDC.sol",
       "solcConfig": {
@@ -780,7 +780,7 @@
       ]
     },
     "/Users/lefg/Documents/GitHub/Bridges/contracts/IUSDT.sol": {
-      "lastModificationDate": 1677969880212,
+      "lastModificationDate": 1678109888851,
       "contentHash": "e0cd5c477a97b6ae6edf747b6e8ecd59",
       "sourceName": "contracts/IUSDT.sol",
       "solcConfig": {
@@ -819,7 +819,7 @@
       ]
     },
     "/Users/lefg/Documents/GitHub/Bridges/contracts/LPStaking.sol": {
-      "lastModificationDate": 1677969880209,
+      "lastModificationDate": 1678109889053,
       "contentHash": "8d14113c603683cbb809810bf3faf6cb",
       "sourceName": "contracts/LPStaking.sol",
       "solcConfig": {

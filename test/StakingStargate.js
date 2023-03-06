@@ -16,7 +16,7 @@ const STG = "0xB0D502E938ed5f4df2E681fE6E419ff29631d62b";
 
 const ownerSlot = "0x0";
 
-describe("Staking contract", function () {
+describe("Staking contract to Stargate", function () {
   before(async () => {
     await deployContracts();
   });
