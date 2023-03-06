@@ -1,6 +1,6 @@
 # Report
 
-## Gas Optimizations
+## Gas Optimizations for demo Staking.sol
 
 |                 | Issue                                                                                        | Instances |
 | --------------- | :------------------------------------------------------------------------------------------- | :-------: |
