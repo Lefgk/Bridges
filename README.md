@@ -35,8 +35,6 @@ Multiswap: There is a chance that the liquidity we provide gets bridged to anoth
 
 Demo Contracts: [Link](https://github.com/Lefgk/Bridges/blob/main/contracts/)
 
-Solidity : [Link](https://github.com/Lefgk/Bridges/blob/main/contracts/Staking.sol) 
-
 Gas Reports: [MC Strategy](https://github.com/Lefgk/Bridges/blob/main/GasReports/GasReportStrategyMC.md), [MasterChef](https://github.com/Lefgk/Bridges/blob/main/GasReports/GasReportMC.md), [Demo](https://github.com/Lefgk/Bridges/blob/main/GasReports/GasReportStaking.md)
 
 
